@@ -33,6 +33,21 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         log.info("http %s", fmt % args)
 
+def _make_server(cfg):
+    try:
+        from werkzeug.serving import WSGIRequestHandler, make_server
+        from studio.app import create_app
+    except ImportError as e:
+        log.warning("studio unavailable (%s); serving /health only", e)
+        print(f"studio unavailable: {e}", file=sys.stderr)
+        return ThreadingHTTPServer((cfg.host, cfg.port), Handler)
+
+    class _Handler(WSGIRequestHandler):
+        timeout = 10
+
+    return make_server(cfg.host, cfg.port, create_app(cfg.root), threaded=True, request_handler=_Handler)
+
+
 def main():
     try:
         cfg = load()
@@ -44,8 +59,10 @@ def main():
     h.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
     log.addHandler(h)
     log.setLevel(logging.INFO)
+    logging.getLogger("werkzeug").addHandler(h)
+    logging.getLogger("werkzeug").setLevel(logging.INFO)
     try:
-        srv = ThreadingHTTPServer((cfg.host, cfg.port), Handler)
+        srv = _make_server(cfg)
     except OSError as e:
         log.error("cannot bind %s:%s: %s", cfg.host, cfg.port, e)
         print(f"cannot bind {cfg.host}:{cfg.port}: {e}", file=sys.stderr)
