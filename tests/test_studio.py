@@ -83,3 +83,8 @@ def test_voices_failure_and_filter(client, monkeypatch):
 
 def test_jobs_endpoint_empty(client):
     assert client.get("/api/jobs").get_json() == []
+
+def test_system_stats(client):
+    d = client.get("/api/system").get_json()
+    assert d["projects"] == 0 and d["jobs_active"] == 0
+    assert d["free_mb"] > 0 and d["total_mb"] >= d["free_mb"]

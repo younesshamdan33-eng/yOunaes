@@ -1,4 +1,4 @@
-import os
+import os, shutil
 from flask import Flask, jsonify, request, send_from_directory
 from werkzeug.exceptions import HTTPException
 from cinema_core import config, jobs
@@ -112,5 +112,13 @@ def create_app(root=None):
     def api_jobs():
         keys = ("id", "kind", "state", "progress", "created")
         return jsonify([{k: j.get(k) for k in keys} for j in jobstore.list()])
+
+    @app.get("/api/system")
+    def api_system():
+        du = shutil.disk_usage(cfg.root)
+        js = jobstore.list()
+        return jsonify(projects=len(store.list()),
+                       jobs_active=sum(1 for j in js if j["state"] in ("queued", "running")),
+                       free_mb=du.free // 1048576, total_mb=du.total // 1048576, min_free_mb=cfg.min_free_mb)
 
     return app

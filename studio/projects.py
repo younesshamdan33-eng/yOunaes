@@ -63,8 +63,9 @@ class ProjectStore:
         tmp.replace(d / "project.json")
 
     def get(self, pid):
+        d = self._dir(pid)
         try:
-            return json.loads((self._dir(pid) / "project.json").read_text(encoding="utf-8"))
+            return json.loads((d / "project.json").read_text(encoding="utf-8"))
         except FileNotFoundError:
             raise NotFound("project not found")
         except (OSError, ValueError):
