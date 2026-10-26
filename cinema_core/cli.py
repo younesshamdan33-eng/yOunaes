@@ -1,8 +1,8 @@
 import argparse, subprocess, sys
-from . import backup, config, doctor, lifecycle
+from . import backup, config, doctor, jobs, lifecycle
 
 PLANNED = ["setup", "update-check", "online", "offline"]
-CMDS = ["doctor", "start", "stop", "restart", "status", "logs", "test", "backup", "restore"]
+CMDS = ["doctor", "start", "stop", "restart", "status", "logs", "test", "backup", "restore", "jobs"]
 
 def build_parser():
     p = argparse.ArgumentParser(prog="cinema", description="CINEMA CORE server manager")
@@ -11,6 +11,8 @@ def build_parser():
         sp = sub.add_parser(c, help="not implemented yet" if c in PLANNED else None)
         if c == "logs":
             sp.add_argument("-n", type=int, default=30)
+        if c == "jobs":
+            sp.add_argument("--recover", action="store_true")
         if c == "restore":
             sp.add_argument("file", nargs="?")
             sp.add_argument("--yes", action="store_true")
@@ -76,6 +78,13 @@ def main(argv=None):
             return 1
         print(msg)
         return code
+    if a.cmd == "jobs":
+        store = jobs.JobStore(cfg)
+        if a.recover:
+            print(f"recovered {store.recover()} interrupted job(s)")
+        for j in store.list():
+            print(f"{j['id']} {j['state']:<9} {j['progress']:>3}% {j['kind']}")
+        return 0
     if a.cmd == "test":
         return subprocess.call([sys.executable, "-m", "pytest", "-q", "tests"], cwd=cfg.root)
     return 2

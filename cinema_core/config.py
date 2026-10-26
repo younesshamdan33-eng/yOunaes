@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 ROOT = Path(os.environ.get("CINEMA_ROOT") or Path(__file__).resolve().parent.parent)
-ALLOWED = {"host", "port", "min_free_mb"}
+ALLOWED = {"host", "port", "min_free_mb", "max_concurrent_jobs"}
 
 class ConfigError(ValueError):
     pass
@@ -14,6 +14,7 @@ class Config:
     host: str = "127.0.0.1"
     port: int = 8750
     min_free_mb: int = 300
+    max_concurrent_jobs: int = 1
     start_timeout: float = 15.0
     stop_timeout: float = 10.0
     @property
@@ -24,6 +25,8 @@ class Config:
     def pid_file(self): return self.run_dir / "cinema.pid"
     @property
     def backup_dir(self): return self.root / "var" / "backups"
+    @property
+    def jobs_dir(self): return self.root / "var" / "jobs"
 
 def load(root=None):
     root = Path(root or ROOT)
@@ -46,4 +49,6 @@ def load(root=None):
         raise ConfigError("port must be an integer between 1024 and 65535")
     if isinstance(c.min_free_mb, bool) or not isinstance(c.min_free_mb, int) or c.min_free_mb < 0:
         raise ConfigError("min_free_mb must be a non-negative integer")
+    if isinstance(c.max_concurrent_jobs, bool) or not isinstance(c.max_concurrent_jobs, int) or not 1 <= c.max_concurrent_jobs <= 4:
+        raise ConfigError("max_concurrent_jobs must be an integer between 1 and 4")
     return c
