@@ -1,4 +1,4 @@
-import argparse, subprocess, sys
+import argparse, json, subprocess, sys
 from . import backup, config, doctor, jobs, lifecycle
 
 PLANNED = ["setup", "update-check", "online", "offline"]
@@ -11,6 +11,8 @@ def build_parser():
         sp = sub.add_parser(c, help="not implemented yet" if c in PLANNED else None)
         if c == "logs":
             sp.add_argument("-n", type=int, default=30)
+        if c in ("status", "jobs"):
+            sp.add_argument("--json", action="store_true")
         if c == "jobs":
             sp.add_argument("--recover", action="store_true")
         if c == "restore":
@@ -46,7 +48,10 @@ def main(argv=None):
         return code
     if a.cmd == "status":
         s = lifecycle.status(cfg)
-        print(f"running={s['running']} pid={s['pid']} responding={s['responding']} url={s['url']}")
+        if a.json:
+            print(json.dumps(s))
+        else:
+            print(f"running={s['running']} pid={s['pid']} responding={s['responding']} url={s['url']}")
         return 0 if s["running"] else 1
     if a.cmd == "logs":
         for name in ("cinema.log", "server.out"):
@@ -81,7 +86,10 @@ def main(argv=None):
     if a.cmd == "jobs":
         store = jobs.JobStore(cfg)
         if a.recover:
-            print(f"recovered {store.recover()} interrupted job(s)")
+            print(f"recovered {store.recover()} interrupted job(s)", file=sys.stderr if a.json else sys.stdout)
+        if a.json:
+            print(json.dumps(store.list()))
+            return 0
         for j in store.list():
             print(f"{j['id']} {j['state']:<9} {j['progress']:>3}% {j['kind']}")
         return 0
