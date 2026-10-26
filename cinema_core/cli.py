@@ -1,8 +1,8 @@
 import argparse, subprocess, sys
-from . import config, doctor, lifecycle
+from . import backup, config, doctor, lifecycle
 
-PLANNED = ["setup", "update-check", "backup", "restore", "online", "offline"]
-CMDS = ["doctor", "start", "stop", "restart", "status", "logs", "test"]
+PLANNED = ["setup", "update-check", "online", "offline"]
+CMDS = ["doctor", "start", "stop", "restart", "status", "logs", "test", "backup", "restore"]
 
 def build_parser():
     p = argparse.ArgumentParser(prog="cinema", description="CINEMA CORE server manager")
@@ -11,6 +11,9 @@ def build_parser():
         sp = sub.add_parser(c, help="not implemented yet" if c in PLANNED else None)
         if c == "logs":
             sp.add_argument("-n", type=int, default=30)
+        if c == "restore":
+            sp.add_argument("file", nargs="?")
+            sp.add_argument("--yes", action="store_true")
     sub.add_parser("help")
     return p
 
@@ -52,6 +55,27 @@ def main(argv=None):
             else:
                 print("(none yet)")
         return 0
+    if a.cmd == "backup":
+        try:
+            path, n = backup.create(cfg)
+        except backup.BackupError as e:
+            print(f"backup failed: {e}")
+            return 1
+        print(f"backup OK, verified: {path} ({n} files)")
+        return 0
+    if a.cmd == "restore":
+        if not a.file:
+            for f in sorted(cfg.backup_dir.glob("cinema-*.tar.gz")):
+                print(f)
+            print("usage: cinema restore FILE [--yes]")
+            return 2
+        try:
+            code, msg = backup.restore(cfg, a.file, a.yes)
+        except backup.BackupError as e:
+            print(f"restore failed: {e}")
+            return 1
+        print(msg)
+        return code
     if a.cmd == "test":
         return subprocess.call([sys.executable, "-m", "pytest", "-q", "tests"], cwd=cfg.root)
     return 2

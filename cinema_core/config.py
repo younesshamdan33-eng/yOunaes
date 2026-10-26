@@ -22,6 +22,8 @@ class Config:
     def log_dir(self): return self.root / "var" / "logs"
     @property
     def pid_file(self): return self.run_dir / "cinema.pid"
+    @property
+    def backup_dir(self): return self.root / "var" / "backups"
 
 def load(root=None):
     root = Path(root or ROOT)
