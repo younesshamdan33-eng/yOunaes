@@ -1,8 +1,8 @@
 import argparse, json, subprocess, sys
-from . import backup, config, doctor, jobs, lifecycle
+from . import backup, config, doctor, jobs, lifecycle, tunnel
 
-PLANNED = ["setup", "update-check", "online", "offline"]
-CMDS = ["doctor", "start", "stop", "restart", "status", "logs", "test", "backup", "restore", "jobs"]
+PLANNED = ["setup", "update-check"]
+CMDS = ["doctor", "start", "stop", "restart", "status", "logs", "test", "backup", "restore", "jobs", "online", "offline"]
 
 def build_parser():
     p = argparse.ArgumentParser(prog="cinema", description="CINEMA CORE server manager")
@@ -15,6 +15,8 @@ def build_parser():
             sp.add_argument("--json", action="store_true")
         if c == "jobs":
             sp.add_argument("--recover", action="store_true")
+        if c == "online":
+            sp.add_argument("--yes", action="store_true")
         if c == "restore":
             sp.add_argument("file", nargs="?")
             sp.add_argument("--yes", action="store_true")
@@ -41,6 +43,8 @@ def main(argv=None):
             print(f"[{'OK' if ok else 'FAIL'}] {n}: {d}")
         return 0 if all(ok for _, ok, _ in res) else 1
     if a.cmd in ("start", "stop", "restart"):
+        if a.cmd in ("stop", "restart"):
+            tunnel.offline(cfg)
         if a.cmd == "restart":
             lifecycle.stop(cfg)
         code, msg = (lifecycle.stop if a.cmd == "stop" else lifecycle.start)(cfg)
@@ -93,6 +97,14 @@ def main(argv=None):
         for j in store.list():
             print(f"{j['id']} {j['state']:<9} {j['progress']:>3}% {j['kind']}")
         return 0
+    if a.cmd == "online":
+        code, msg = tunnel.online(cfg, a.yes)
+        print(msg)
+        return code
+    if a.cmd == "offline":
+        code, msg = tunnel.offline(cfg)
+        print(msg)
+        return code
     if a.cmd == "test":
         return subprocess.call([sys.executable, "-m", "pytest", "-q", "tests"], cwd=cfg.root)
     return 2
