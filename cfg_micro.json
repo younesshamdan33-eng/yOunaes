@@ -1,0 +1,23 @@
+{
+  "work_dir": "/kaggle/temp/cinema_work",
+  "stages": ["fetch", "scan", "captions", "manifest", "prepare", "train"],
+  "data_dirs": ["/kaggle/input/sample-videos"],
+  "fetch": [
+    {
+      "repo": "Wild-Heart/Tom-and-Jerry-VideoGeneration-Dataset",
+      "pattern": "*.mp4",
+      "max_gb": 0.3,
+      "accept_license": true
+    }
+  ],
+  "captions_files": [],
+  "max_steps": 50,
+  "grad_accum": 2,
+  "lora_rank": 8,
+  "ckpt_every": 25,
+  "gen_steps": 10,
+  "eval_n": 1,
+  "windows": 1,
+  "min_duration": 1.0,
+  "manifest_limit": 5
+}

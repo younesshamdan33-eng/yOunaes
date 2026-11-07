@@ -1,0 +1,16 @@
+torch>=2.4.0
+torchvision
+diffusers>=0.35.0
+transformers>=4.46.0
+accelerate
+safetensors
+sentencepiece
+protobuf
+opencv-python-headless
+imageio[ffmpeg]
+numpy
+Pillow
+basicsr
+realesrgan
+huggingface_hub
+tqdm

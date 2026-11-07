@@ -1,0 +1,9 @@
+{
+  "name": "cinema-platform",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-core && pip install -r requirements.txt",
+  "postStartCommand": "bash .devcontainer/start.sh",
+  "forwardPorts": [8750],
+  "portsAttributes": {"8750": {"label": "Cinema Studio", "onAutoForward": "notify"}},
+  "remoteEnv": {"CINEMA_ALLOW_HOST_SUFFIX": ".app.github.dev"}
+}

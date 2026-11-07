@@ -1,0 +1,7 @@
+.pgrid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+textarea.script{min-height:280px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;line-height:1.7}
+.shotrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--line)}
+.shotrow .tx{flex:1 1 180px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pv{width:100%;border-radius:14px;background:#000;max-height:70vh}
+.seg2{display:flex;gap:6px;margin-bottom:12px}
+.seg2 button{flex:1;min-height:44px}

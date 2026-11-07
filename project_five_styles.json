@@ -1,0 +1,59 @@
+{
+  "shots": [
+    {
+      "id": "cinematic_01",
+      "subject": "a lone explorer wearing a weathered expedition coat",
+      "action": "walks slowly toward an ancient city emerging from desert sand",
+      "setting": "vast desert at sunset, monumental lost stone city",
+      "style": "cinematic",
+      "camera": "tracking",
+      "lighting": "golden_hour",
+      "mood": "epic and mysterious",
+      "lens": "35mm",
+      "motion": "natural walking, cloth moving gently in the wind"
+    },
+    {
+      "id": "human_01",
+      "subject": "a middle-aged man with short dark hair and a natural face",
+      "action": "turns toward the camera and gives a subtle smile",
+      "setting": "quiet modern apartment beside a window",
+      "style": "realistic_human",
+      "camera": "close_up",
+      "lighting": "overcast",
+      "mood": "warm and natural",
+      "lens": "50mm"
+    },
+    {
+      "id": "cartoon3d_01",
+      "subject": "a small orange fox with large expressive eyes and a blue scarf",
+      "action": "jumps over a stream and lands on a mossy rock",
+      "setting": "colorful magical forest",
+      "style": "cartoon3d",
+      "camera": "tracking",
+      "lighting": "golden_hour",
+      "mood": "playful",
+      "visual_detail": "soft fur, expressive face, detailed dimensional environment"
+    },
+    {
+      "id": "cartoon2d_01",
+      "subject": "a young adventurer with a green jacket and a small backpack",
+      "action": "runs along a forest path while leaves swirl around",
+      "setting": "hand-painted fantasy forest",
+      "style": "cartoon2d",
+      "camera": "tracking",
+      "lighting": "golden_hour",
+      "mood": "joyful and adventurous"
+    },
+    {
+      "id": "anime_01",
+      "subject": "a young swordswoman with long black hair and a red ribbon",
+      "action": "draws her sword as cherry blossom petals cross the frame",
+      "setting": "traditional Japanese temple courtyard",
+      "style": "anime",
+      "camera": "dolly_in",
+      "lighting": "moody",
+      "mood": "dramatic and determined",
+      "visual_detail": "precise line art, detailed anime background, controlled cel shading"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "model_id": "Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
+  "work_dir": "/kaggle/working/wan21_baseline_clean",
+  "stages": ["baseline"],
+  "gen_steps": 20,
+  "gen_frames": 17,
+  "gen_h": 384,
+  "gen_w": 640,
+  "eval_n": 1,
+  "use_clip": false,
+  "seed": 42
+}

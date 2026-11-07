@@ -1,0 +1,14 @@
+{
+  "model_id": "Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
+  "work_dir": "/kaggle/working/phase1_quality_v1",
+  "stages": ["baseline"],
+  "gen_steps": 25,
+  "gen_frames": 17,
+  "gen_h": 320,
+  "gen_w": 576,
+  "eval_n": 5,
+  "use_clip": false,
+  "seed": 42,
+  "tier": -1,
+  "fps": 16
+}

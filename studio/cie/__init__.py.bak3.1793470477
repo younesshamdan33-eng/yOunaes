@@ -1,0 +1,134 @@
+"""Cinema Intelligence Engine (CIE) — the central production brain.
+
+Orchestrates the specialized intelligence units:
+  story -> characters -> direction -> scenes/shots -> narration plan.
+
+The CIE converts a raw idea (Arabic or English) into a complete,
+provider-ready film plan, then hands execution to the existing
+film engine (FilmRunner + providers). It is rule-based and fully
+offline; an optional LLM enrichment hook (llm.py) can improve the
+plan when the user configures one, but is never required.
+
+Honesty contract:
+- Prompts sent to video models are English (models respond best);
+  narration and subtitles stay in the film's language.
+- CIE structures and plans; it does not claim creative genius.
+- Continuity is enforced by injecting identical character visual
+  descriptions into every prompt; it is best-effort, not guaranteed
+  by the model.
+"""
+import math, time
+from .. import film
+from . import lang, story, character, director
+try:
+    from . import scene as scene_mod
+except ImportError:
+    scene_mod = None
+try:
+    from . import voice
+except ImportError:
+    voice = None
+from . import lang, story, character, director
+try:
+    from . import scene as scene_mod
+except ImportError:
+    scene_mod = None
+try:
+    from . import voice
+except ImportError:
+    voice = None
+
+MAX_IDEA = 800
+MIN_TARGET, MAX_TARGET_CIE = 8, 600
+DEFAULT_SHOT = 5
+
+
+class CIEError(Exception):
+    pass
+
+
+def _s(v, n):
+    return (v or "").strip()[:n] if isinstance(v, str) else ""
+
+
+def plan(spec):
+    """idea -> full CIE production plan (pure dict, no I/O, deterministic)."""
+    if not isinstance(spec, dict):
+        raise CIEError("body must be an object")
+    idea = _s(spec.get("idea"), MAX_IDEA)
+    if len(idea) < 4:
+        raise CIEError("idea is required (at least 4 characters)")
+    language = (_s(spec.get("language"), 8) or lang.detect_language(idea)).lower()
+    if language not in ("ar", "en"):
+        language = "en"
+    genre = (_s(spec.get("genre"), 20) or lang.detect_genre(idea)).lower()
+    if genre not in story.GENRES:
+        genre = "drama"
+    tone = (_s(spec.get("tone"), 20) or lang.detect_tone(idea)).lower()
+    if tone not in director.TONES:
+        tone = "natural"
+    ts = spec.get("target_seconds", 30)
+    if isinstance(ts, bool):
+        raise CIEError("target_seconds must be an integer")
+    try:
+        target = int(ts)
+    except (TypeError, ValueError):
+        raise CIEError("target_seconds must be an integer")
+    if not MIN_TARGET <= target <= MAX_TARGET_CIE:
+        raise CIEError("target_seconds must be between %d and %d" % (MIN_TARGET, MAX_TARGET_CIE))
+    shot = spec.get("shot_seconds", DEFAULT_SHOT)
+    if isinstance(shot, bool) or not isinstance(shot, int) or not 2 <= shot <= 10:
+        raise CIEError("shot_seconds must be an integer between 2 and 10")
+
+    st = story.build(idea, genre, tone, target, language)
+    chars = character.build(st, language, spec)
+    direction = director.plan(st, genre, tone)
+    scenes = scene_mod.build(st, chars, direction)
+    narration = voice.plan_narration(st, chars, language)
+    submissions = math.ceil(target / shot)
+    return {
+        "idea": idea, "language": language, "genre": genre, "tone": tone,
+        "target_seconds": target, "shot_seconds": shot,
+        "story": st, "characters": chars, "direction": direction,
+        "scenes": scenes, "narration": narration,
+        "submissions_est": submissions,
+        "note": "each shot is one provider submission; Magic Hour free tier "
+                "defaults to 5 submissions/day (MAGIC_HOUR_DAILY_LIMIT env)",
+        "created": time.time(),
+    }
+
+
+def film_spec(p, overrides=None):
+    """CIE plan -> dict compatible with film.plan_film()."""
+    o = overrides or {}
+    scenes = [{"title": sc["title"], "text": sc["prompt"]} for sc in p["scenes"]]
+    return {
+        "title": p["story"]["title"],
+        "provider": o.get("provider", "magic_hour"),
+        "model": o.get("model", "ltx-2.5"),
+        "resolution": o.get("resolution", "480p"),
+        "aspect_ratio": o.get("aspect_ratio", "16:9"),
+        "audio": bool(o.get("audio", False)),
+        "fps": o.get("fps", 24),
+        "shot_seconds": p["shot_seconds"],
+        "target_seconds": p["target_seconds"],
+        "language": p["language"],
+        "continuity": {
+            "style": p["direction"]["style"],
+            "location": p["direction"]["location"],
+            "characters": [c["visual"] for c in p["characters"]][:10],
+        },
+        "scenes": scenes,
+    }
+
+
+def create_film(film_store, spec):
+    """Full pipeline: CIE plan -> validated film object saved to disk."""
+    p = plan(spec)
+    fs = film_spec(p, spec)
+    f = film.plan_film(fs)
+    f["cie"] = p
+    film_store.save(f)
+    film_store.log(f["id"], "CIE plan created: %s (genre=%s tone=%s lang=%s)"
+                   % (p["story"]["logline"][:80], p["genre"], p["tone"], p["language"]))
+    return f
