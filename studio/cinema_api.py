@@ -9,22 +9,55 @@ GENERATED.mkdir(parents=True, exist_ok=True)
 
 cinema_bp = Blueprint("cinema_api", __name__, url_prefix="/api/cinema")
 
-# In-memory job store (persists as long as server runs)
+# File-backed job store (persists across server restarts)
 _JOBS = {}
 _JOBS_LOCK = threading.Lock()
 _WORKER_STARTED = False
+_STORE_DIR = BASE / "var" / "cinema_jobs"
+_STORE_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def _new_job(prompt, style, lighting, camera):
+def _load_persisted_jobs():
+    """Load existing jobs from disk at startup."""
+    with _JOBS_LOCK:
+        for f in _STORE_DIR.glob("*.json"):
+            try:
+                data = json.loads(f.read_text(encoding="utf-8"))
+                if isinstance(data, dict) and "id" in data:
+                    _JOBS[data["id"]] = data
+            except Exception:
+                pass
+
+
+_load_persisted_jobs()
+
+
+def _save_job_file(job_id: str):
+    """Save a job dictionary to a file atomically."""
+    job_data = _JOBS.get(job_id)
+    if not job_data:
+        return
+    p = _STORE_DIR / f"{job_id}.json"
+    tmp = p.with_suffix(".tmp")
+    try:
+        tmp.write_text(json.dumps(job_data, ensure_ascii=False, indent=2), encoding="utf-8")
+        os.replace(tmp, p)
+    except Exception:
+        pass
+
+
+def _new_job(prompt, style, lighting, camera, duration=5):
     job_id = uuid.uuid4().hex[:10]
     with _JOBS_LOCK:
         _JOBS[job_id] = {
             "id": job_id, "prompt": prompt, "style": style,
             "lighting": lighting, "camera": camera,
+            "duration": duration,
             "status": "queued", "message": "في الانتظار",
             "video_file": "", "kaggle_url": "",
             "created_at": time.time(), "updated_at": time.time()
         }
+        _save_job_file(job_id)
     return job_id
 
 
@@ -32,6 +65,7 @@ def _update(job_id, **kw):
     with _JOBS_LOCK:
         if job_id in _JOBS:
             _JOBS[job_id].update(kw, updated_at=time.time())
+            _save_job_file(job_id)
 
 
 def _get(job_id):
@@ -327,11 +361,18 @@ def generate():
         return jsonify({"error": "prompt required"}), 400
     if len(prompt) > 500:
         return jsonify({"error": "too long"}), 400
+    try:
+        dur = int(data.get("duration", 5))
+    except (TypeError, ValueError):
+        dur = 5
+    dur = max(5, min(dur, 30))
+
     jid = _new_job(
         prompt,
-        data.get("style", "natural"),
+        data.get("style", "cinematic_realistic"),
         data.get("lighting", "natural"),
         data.get("camera", "static"),
+        duration=dur,
     )
     return jsonify({"job_id": jid, "status": "queued"}), 202
 

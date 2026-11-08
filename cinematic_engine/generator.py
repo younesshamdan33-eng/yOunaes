@@ -23,8 +23,14 @@ class WanGenerator:
     @torch.inference_mode()
     def generate(self, user_prompt: str, negative_prompt: str = None):
         if self.pipe is None: self.load()
-        prompt = build_cinematic_prompt(user_prompt, self.cfg)
-        neg = negative_prompt or self.cfg.negative_prompt
+        prompt_res = build_cinematic_prompt(user_prompt, self.cfg)
+        if isinstance(prompt_res, tuple):
+            pos, auto_neg = prompt_res
+            prompt = pos
+            neg = negative_prompt or auto_neg or self.cfg.negative_prompt
+        else:
+            prompt = prompt_res
+            neg = negative_prompt or self.cfg.negative_prompt
         generator = torch.Generator(device="cpu").manual_seed(self.cfg.seed)
         result = self.pipe(prompt=prompt, negative_prompt=neg, height=self.cfg.height, width=self.cfg.width, num_frames=self.cfg.num_frames, num_inference_steps=self.cfg.num_inference_steps, guidance_scale=self.cfg.guidance_scale, generator=generator)
         return result.frames[0] if isinstance(result.frames, list) else result.frames
