@@ -8,10 +8,16 @@ import time
 from pathlib import Path
 from typing import Optional, List
 
-from config import CinematicConfig
-from generator import WanGenerator
-from postprocess import run_postprocess, frames_to_video
-from timeline import TimelineManager
+try:
+    from .config import CinematicConfig
+    from .generator import WanGenerator
+    from .postprocess import run_postprocess, frames_to_video
+    from .timeline import TimelineManager
+except (ImportError, ValueError):
+    from config import CinematicConfig
+    from generator import WanGenerator
+    from postprocess import run_postprocess, frames_to_video
+    from timeline import TimelineManager
 
 def run_cinematic_engine(user_prompt: str, cfg: Optional[CinematicConfig] = None, output_name: str = "scene_01") -> str:
     """
@@ -51,7 +57,7 @@ def run_cinematic_engine(user_prompt: str, cfg: Optional[CinematicConfig] = None
         cfg.shot_type = shot.shot_type
         cfg.camera_motion = shot.camera_motion
 
-        frames = gen.generate(shot.prompt, negative_prompt=shot.negative_prompt)
+        frames = gen.generate(shot.prompt, negative_prompt=shot.negative_prompt, already_built=True)
         frames_to_video(frames, str(shot_raw_path), cfg.fps)
         shot_final_path = run_postprocess(frames, cfg, str(shot_raw_path))
         shot_files.append(Path(shot_final_path))

@@ -1,9 +1,8 @@
 """
-Prompt engineering module for CINEMA AI — Wan 2.1 T2V 1.3B.
-Supports the 5 canonical visual styles, multilingual prompt understanding
-across 11 key languages (Arabic MSA & Dialects, English, French, Spanish, German,
-Portuguese, Turkish, Chinese, Japanese, Korean), semantic concept extraction,
-and negative prompt mapping.
+Prompt engineering and cinematic intelligence module for CINEMA AI — Wan 2.1 T2V 1.3B.
+Supports the 5 canonical visual capabilities, deep bilingual Arabic (MSA, Moroccan Darija,
+Egyptian, Levantine, Gulf/Saudi/Emirati, Iraqi, Sudanese) and English semantic understanding,
+character/action/environment/emotion extraction, and negative prompt mapping.
 """
 from __future__ import annotations
 import re
@@ -143,155 +142,73 @@ LOOK_MAP: Dict[str, str] = {
 }
 
 # ==============================================================================
-# Multilingual Vocabulary & Entity Expansion
+# Comprehensive Arabic Dialect & Multilingual Vocabulary Expansion
 # ==============================================================================
-MULTILINGUAL_TERMS = [
-    # Arabic MSA & Dialects
-    (r"(?:ال)?فارس", "knight on horseback"),
-    (r"(?:ال)?(?:راجل|ريال|زلمة|رجل)", "a man with detailed facial features"),
-    (r"(?:ال)?(?:ست|مرا|حرمة|مرأة|امرأة)", "a woman with natural expressive face"),
-    (r"(?:ال)?(?:بنت|صبية|طفلة|فتاة)", "a young woman with natural expression"),
-    (r"(?:ال)?(?:ولد|طّفل|عيّل|ياهل|درّي|طفل)", "a young child"),
-    (r"(?:ال)?(?:قطة|بسة|مش|هرّة|سنور)", "a small agile cat"),
-    (r"(?:ال)?كلب", "a loyal dog"),
-    (r"(?:ال)?صحراء", "vast desert landscape with sand dunes"),
-    (r"(?:ال)?غروب", "dramatic sunset golden horizon"),
-    (r"(?:ال)?(?:مطر|شتا)", "heavy cinematic rain falling"),
-    (r"(?:ال)?غابة", "dense lush forest with tall trees"),
-    (r"(?:ال)?مدينة", "bustling city streets"),
+DIALECT_DICTIONARY = [
+    # 1. Characters across MSA & Regional Dialects (Egyptian, Levantine, Maghrebi, Gulf, Iraqi, Sudanese)
+    (r"(?:ال)?(?:راجل|ريال|زلمة|رجل|راقل|زول)", "a man with detailed facial features and expressive eyes"),
+    (r"(?:ال)?(?:ست|مرا|حرمة|مرأة|امرأة|ولية|نسوان)", "a woman with natural expressive face"),
+    (r"(?:ال)?(?:بنت|صبية|طفلة|فتاة|بنوتة)", "a young woman with natural authentic expression"),
+    (r"(?:ال)?(?:ولد|طّفل|عيّل|ياهل|درّي|شافع|صبي|طفل)", "a young child"),
+    (r"(?:ال)?(?:عجوز|شيبة|ختيار|مسن|شايب)", "an elderly person with weathered features and wisdom"),
+    (r"(?:ال)?(?:فارس|خيّال)", "a noble knight on horseback"),
+    (r"(?:ال)?(?:قطة|بسة|مش|هرّة|سنور|قطوس)", "a small agile cat"),
+    (r"(?:ال)?(?:كلب|جرو)", "a loyal dog"),
 
-    # French
-    (r"\bchevalier\b", "knight on horseback"),
-    (r"\bhublot\b|\bd[ée]sert\b", "vast desert landscape"),
-    (r"\bcoucher de soleil\b", "dramatic sunset golden horizon"),
-    (r"\bfor[êe]t\b", "dense lush forest"),
-    (r"\bhomme\b", "a man with detailed facial features"),
-    (r"\bfemme\b", "a woman with natural expressive face"),
-    (r"\benfant\b", "a young child"),
-    (r"\bpluie\b", "cinematic rain falling"),
+    # 2. Environments & Locations
+    (r"(?:ال)?صحراء", "vast desert landscape with sweeping golden sand dunes"),
+    (r"(?:ال)?غروب", "dramatic sunset with warm golden hour horizon"),
+    (r"(?:ال)?شروق", "atmospheric sunrise morning soft light"),
+    (r"(?:ال)?(?:بحر|محيط)", "majestic ocean with rolling waves"),
+    (r"(?:ال)?(?:مطر|شتا|نوء)", "heavy cinematic rain falling through the air"),
+    (r"(?:ال)?ليل", "atmospheric dark night illuminated by subtle ambient sources"),
+    (r"(?:ال)?نهار", "bright clear daylight with crisp natural shadows"),
+    (r"(?:ال)?غابة", "dense lush ancient forest with tall majestic trees"),
+    (r"(?:ال)?(?:شارع|زنقة|درب|حارة|سكة)", "atmospheric city street with rich urban textures"),
+    (r"(?:ال)?مدينة", "bustling metropolitan city skyline"),
 
-    # Spanish
-    (r"\bcaballero\b", "knight on horseback"),
-    (r"\bdesierto\b", "vast desert landscape"),
-    (r"\batardecer\b|\bpuesta de sol\b", "dramatic sunset golden horizon"),
-    (r"\bbosque\b", "dense lush forest"),
-    (r"\bhombre\b", "a man with detailed facial features"),
-    (r"\bmujer\b", "a woman with natural expressive face"),
-    (r"\bni[ñn]o\b|\bni[ñn]a\b", "a young child"),
-    (r"\blluvia\b", "cinematic rain falling"),
+    # 3. Actions & Movement (MSA & Dialects)
+    (r"(?:بيتمشى|كيتمشى|قاعد يمشي|عم يمشي|يمشي|يتمشى)", "walking steadily through the scene"),
+    (r"(?:بيجري|كيركض|عم يركض|يركض|يجري|يطرد)", "running dynamically with energetic motion"),
+    (r"(?:بيضحك|كيضحك|عم يبتسم|يبتسم|يضحك)", "smiling warmly with subtle facial emotion"),
+    (r"(?:بيشوف|كيشوف|عم يتطلع|يطالع|يبحلق|ينظر|يشوف)", "looking intently with purposeful gaze"),
+    (r"(?:بيسوق|كيصوڭ|عم يسوق|يسوق|يقود)", "driving smoothly across the landscape"),
+    (r"(?:ال)?سيف", "gleaming steel sword held with authority"),
+    (r"(?:ال)?معركة", "epic dynamic cinematic encounter"),
 
-    # German
-    (r"\britter\b", "knight on horseback"),
-    (r"\bw[üu]ste\b", "vast desert landscape"),
-    (r"\bsonnenuntergang\b", "dramatic sunset golden horizon"),
-    (r"\bwald\b", "dense lush forest"),
-    (r"\bmann\b", "a man with detailed facial features"),
-    (r"\bfrau\b", "a woman with natural expressive face"),
-    (r"\bkind\b", "a young child"),
-    (r"\bregen\b", "cinematic rain falling"),
-
-    # Portuguese
-    (r"\bcavaleiro\b", "knight on horseback"),
-    (r"\bdeserto\b", "vast desert landscape"),
-    (r"\bp[ôo]r do sol\b", "dramatic sunset golden horizon"),
-    (r"\bfloresta\b", "dense lush forest"),
-    (r"\bhomem\b", "a man with detailed facial features"),
-    (r"\bmulher\b", "a woman with natural expressive face"),
-    (r"\bcrian[çc]a\b", "a young child"),
-
-    # Turkish
-    (r"\bş[oö]valye\b|\bsovalye\b", "knight on horseback"),
-    (r"\bç[oö]l\b|\bcol\b", "vast desert landscape"),
-    (r"\bg[üu]n bat[ıi]m[ıi]\b", "dramatic sunset golden horizon"),
-    (r"\borman\b", "dense lush forest"),
-    (r"\badam\b", "a man with detailed facial features"),
-    (r"\bkad[ıi]n\b", "a woman with natural expressive face"),
-    (r"\b[çc]ocuk\b", "a young child"),
-
-    # Chinese
-    (r"骑士|武士", "noble warrior or knight"),
-    (r"沙漠", "vast desert landscape with sand dunes"),
-    (r"日落|夕阳", "dramatic sunset golden horizon"),
-    (r"森林", "dense lush forest"),
-    (r"男人|男子", "a man with detailed facial features"),
-    (r"女人|女子", "a woman with natural expressive face"),
-    (r"小孩|儿童", "a young child"),
-    (r"下雨|雨中", "cinematic rain falling"),
-
-    # Japanese
-    (r"騎士|侍", "noble knight or samurai"),
-    (r"砂漠", "vast desert landscape with sand dunes"),
-    (r"夕日|夕焼け", "dramatic sunset golden horizon"),
-    (r"森", "dense lush forest"),
-    (r"男性|男", "a man with detailed facial features"),
-    (r"女性|女", "a woman with natural expressive face"),
-    (r"子供", "a young child"),
-    (r"雨", "cinematic rain falling"),
-
-    # Korean
-    (r"기사|무사", "noble knight or warrior"),
-    (r"사막", "vast desert landscape with sand dunes"),
-    (r"일몰|석양", "dramatic sunset golden horizon"),
-    (r"숲", "dense lush forest"),
-    (r"남자", "a man with detailed facial features"),
-    (r"여자", "a woman with natural expressive face"),
-    (r"아이|어린이", "a young child"),
-    (r"비", "cinematic rain falling"),
+    # 4. English & International Key terms
+    (r"\bknight\b", "noble knight on horseback"),
+    (r"\bdesert\b", "vast desert landscape with sand dunes"),
+    (r"\bsunset\b", "dramatic sunset golden horizon"),
+    (r"\bforest\b", "dense lush forest with tall trees"),
+    (r"\brain\b", "heavy cinematic rain falling"),
+    (r"\bnight\b", "atmospheric night"),
+    (r"\bwalking\b", "walking steadily"),
+    (r"\brunning\b", "running dynamically"),
 ]
 
 def detect_language(text: str) -> str:
     """
-    Detects language across 11 supported languages and scripts:
-    Arabic ('ar'), Chinese ('zh'), Japanese ('ja'), Korean ('ko'),
-    Turkish ('tr'), German ('de'), French ('fr'), Spanish ('es'),
-    Portuguese ('pt'), and English ('en').
+    Detects whether prompt is Arabic ('ar') or English ('en').
+    Recognizes Arabic script across all dialects and Modern Standard Arabic.
     """
     if not isinstance(text, str) or not text.strip():
         return "en"
-
-    # Script-based counts
     arabic = sum(1 for ch in text if "\u0600" <= ch <= "\u06FF")
-    korean = sum(1 for ch in text if "\uAC00" <= ch <= "\uD7AF" or "\u1100" <= ch <= "\u11FF")
-    japanese = sum(1 for ch in text if "\u3040" <= ch <= "\u309F" or "\u30A0" <= ch <= "\u30FF")
-    cjk = sum(1 for ch in text if "\u4E00" <= ch <= "\u9FFF")
-
-    if arabic > 0 and arabic >= max(korean, japanese, cjk):
-        return "ar"
-    if korean > 0:
-        return "ko"
-    if japanese > 0:
-        return "ja"
-    if cjk > 0:
-        return "zh"
-
-    # Latin-script language heuristics (using multi-word or distinctive stopword patterns)
-    low = f" {text.lower()} "
-    if any(k in low for k in [" the ", " and ", " with ", " in ", " at ", " of ", " is "]):
-        return "en"
-    if any(k in low for k in [" der ", " die ", " das ", " und ", " ein ", " eine "]):
-        return "de"
-    if any(k in low for k in [" dans la ", " dans le ", " une femme ", " un homme ", " avec "]):
-        return "fr"
-    if any(k in low for k in [" en el ", " en la ", " un hombre ", " una mujer ", " con "]):
-        return "es"
-    if any(k in low for k in [" no ", " na ", " um homem ", " uma mulher ", " com "]):
-        return "pt"
-    if any(k in low for k in [" bir ", " için ", " gibi ", " ve "]):
-        return "tr"
-
-    return "en"
+    latin = sum(1 for ch in text if ch.isascii() and ch.isalpha())
+    return "ar" if arabic > 0 and arabic >= latin else "en"
 
 def enrich_bilingual_prompt(text: str) -> str:
     """
-    Enriches multilingual prompts (Arabic, CJK, European languages) by extracting
-    visual concepts and mapping them to cinematic English descriptors while preserving original input.
+    Enriches Arabic prompts (MSA & regional dialects: Moroccan, Egyptian, Levantine, Gulf, etc.)
+    by extracting visual concepts and mapping them to cinematic English descriptors while preserving original input.
     """
     lang = detect_language(text)
     if lang == "en":
         return text
 
     found_anchors = []
-    for pattern, en_desc in MULTILINGUAL_TERMS:
+    for pattern, en_desc in DIALECT_DICTIONARY:
         if re.search(pattern, text, re.IGNORECASE):
             found_anchors.append(en_desc)
 
@@ -308,8 +225,8 @@ def resolve_style(style_name: Optional[str]) -> Tuple[str, Dict[str, str]]:
 
 def parse_prompt_structure(prompt: str) -> Dict[str, Any]:
     """
-    Parses a multilingual prompt into structured components:
-    subject, environment, mood, and detected language.
+    Parses an Arabic or English prompt into structured components:
+    characters, action, environment, lighting, and detected style.
     """
     lang = detect_language(prompt)
     res = {
@@ -327,12 +244,12 @@ def parse_prompt_structure(prompt: str) -> Dict[str, Any]:
             res["style_detected"] = s_canon
             break
 
-    # Character heuristics across multilingual vocabulary
-    if any(k in prompt for k in ["راجل", "ريال", "زلمة", "رجل", "man", "homme", "hombre", "mann", "homem", "adam", "男人", "男性", "남자"]):
+    # Character heuristics across dialects and English
+    if any(k in prompt for k in ["راجل", "ريال", "زلمة", "رجل", "زول", "man", "guy"]):
         res["characters"].append("man")
-    if any(k in prompt for k in ["مرا", "ست", "حرمة", "امرأة", "فتاة", "woman", "femme", "mujer", "frau", "mulher", "kadın", "女人", "女性", "여자"]):
+    if any(k in prompt for k in ["مرا", "ست", "حرمة", "امرأة", "فتاة", "woman", "girl"]):
         res["characters"].append("woman")
-    if any(k in prompt for k in ["ولد", "طفل", "طفلة", "صغيرة", "عيّل", "ياهل", "درّي", "child", "enfant", "niño", "kind", "criança", "çocuk", "小孩", "子供", "아이"]):
+    if any(k in prompt for k in ["ولد", "طفل", "طفلة", "صغيرة", "عيّل", "ياهل", "درّي", "شافع", "child", "kid"]):
         res["characters"].append("child")
 
     return res

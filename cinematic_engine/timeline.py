@@ -1,7 +1,7 @@
 """
 Timeline & Multi-Shot Chaining Engine for CINEMA AI.
 Manages partitioning target durations (5 to 30 seconds) into coherent shots,
-maintaining character, environment, and visual style continuity across shots,
+maintaining character, environment, clothing, and visual style continuity across shots,
 and preparing stitch configurations for FFMPEG/OpenCV rendering.
 """
 from __future__ import annotations
@@ -43,6 +43,7 @@ class ShotPlan:
     prompt: str
     negative_prompt: str
     seed_offset: int
+    characters: List[str] = field(default_factory=list)
 
 @dataclass
 class TimelinePlan:
@@ -87,11 +88,13 @@ class TimelineManager:
             shot_durations.append(dur)
             remaining -= dur
 
-        # Dramatic phases progression
+        # Dramatic phases progression with camera choreography
         phases = [
             ("establishing", "wide", "static"),
             ("development", "medium", "tracking"),
-            ("climax", "close_up", "dolly_in"),
+            ("progression", "medium", "orbit"),
+            ("tension", "close_up", "dolly_in"),
+            ("climax", "close_up", "handheld"),
             ("resolution", "wide", "pan"),
         ]
 
@@ -100,10 +103,14 @@ class TimelineManager:
             phase_idx = min(idx, len(phases) - 1)
             phase_name, shot_type, cam_motion = phases[phase_idx]
 
-            # Build shot-specific prompt that preserves character identity
+            # Build shot-specific prompt that preserves character identity and environment
             shot_prompt_core = user_prompt.strip().rstrip(".,")
+            char_note = f", featuring {', '.join(parsed['characters'])}" if parsed.get("characters") else ""
             if idx > 0:
-                shot_prompt_core = f"Continuing sequence shot {idx+1}, same characters and setting: {shot_prompt_core}"
+                shot_prompt_core = (
+                    f"Continuing narrative sequence shot {idx+1}{char_note}, "
+                    f"consistent environment and attire, {shot_prompt_core}"
+                )
 
             # Simple config namespace for build_cinematic_prompt
             class _Cfg:
@@ -116,7 +123,12 @@ class TimelineManager:
                     self.look = sty
 
             cfg_obj = _Cfg(shot_type, cam_motion, canonical_style)
-            pos, neg = build_cinematic_prompt(shot_prompt_core, cfg=cfg_obj, style_override=canonical_style, return_negative=True)
+            pos, neg = build_cinematic_prompt(
+                shot_prompt_core,
+                cfg=cfg_obj,
+                style_override=canonical_style,
+                return_negative=True
+            )
 
             shots.append(
                 ShotPlan(
@@ -128,6 +140,7 @@ class TimelineManager:
                     prompt=pos,
                     negative_prompt=neg,
                     seed_offset=base_seed + (idx * 17),
+                    characters=list(parsed.get("characters", [])),
                 )
             )
 
@@ -167,6 +180,7 @@ class TimelineManager:
                 for vp in valid_paths:
                     f.write(f"file '{vp.resolve()}'\n")
 
+            # Try stream copy first for speed
             cmd = [
                 ffmpeg, "-y", "-f", "concat", "-safe", "0",
                 "-i", str(list_file),
@@ -174,8 +188,19 @@ class TimelineManager:
                 str(output_path)
             ]
             res = subprocess.run(cmd, capture_output=True, text=True)
+
+            # If stream copy failed, re-encode to guarantee valid timestamps
+            if res.returncode != 0 or not output_path.exists() or output_path.stat().st_size == 0:
+                cmd_reencode = [
+                    ffmpeg, "-y", "-f", "concat", "-safe", "0",
+                    "-i", str(list_file),
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                    str(output_path)
+                ]
+                subprocess.run(cmd_reencode, capture_output=True, text=True)
+
             list_file.unlink(missing_ok=True)
-            if res.returncode == 0 and output_path.exists():
+            if output_path.exists() and output_path.stat().st_size > 0:
                 return output_path
 
         # Fallback: copy first if concat failed or ffmpeg absent

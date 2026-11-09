@@ -34,10 +34,11 @@ def test_shot_continuity_and_character_preservation():
     plan = tm.plan_timeline("A detective in a dark coat searching for clues", target_seconds=15)
     for i, shot in enumerate(plan.shots):
         if i > 0:
-            assert "Continuing sequence shot" in shot.prompt
+            assert "Continuing narrative sequence shot" in shot.prompt
             assert "detective" in shot.prompt
+            assert "consistent environment" in shot.prompt
         # Each shot has a differentiated camera angle or movement
-        assert shot.camera_motion in ["static", "tracking", "dolly_in", "pan"]
+        assert shot.camera_motion in ["static", "tracking", "dolly_in", "pan", "orbit", "handheld"]
 
 def test_stitch_multiple_shots_fallback(tmp_path):
     tm = TimelineManager()
