@@ -73,7 +73,7 @@ def _get(job_id):
         return dict(_JOBS[job_id]) if job_id in _JOBS else None
 
 
-def _build_kaggle_script(job_id, prompt, style, lighting, camera):
+def _build_kaggle_script(job_id, prompt, style, lighting, camera, duration=5):
     engine_dir = BASE / "cinematic_engine"
     if not engine_dir.exists():
         raise RuntimeError("cinematic_engine not found")
@@ -88,7 +88,7 @@ def _build_kaggle_script(job_id, prompt, style, lighting, camera):
 import os, subprocess, sys, tarfile, base64
 os.environ["HF_HOME"] = "/kaggle/temp/hf"
 os.environ["TRANSFORMERS_CACHE"] = "/kaggle/temp/hf"
-print("Installing...")
+print("Installing dependencies...")
 subprocess.run([sys.executable, "-m", "pip", "install", "-q",
     "torch", "torchvision", "diffusers>=0.35.0", "transformers>=4.46.0",
     "accelerate", "safetensors", "sentencepiece", "protobuf",
@@ -112,6 +112,7 @@ cfg = CinematicConfig(
     enable_upscale=False, enable_frame_interpolation=False,
     preserve_original=False
 )
+setattr(cfg, "target_duration", int({duration}))
 os.makedirs(cfg.output_dir, exist_ok=True)
 from pipeline import run_cinematic_engine
 final_path = run_cinematic_engine({repr(prompt)}, cfg, output_name="{job_id}")
@@ -132,7 +133,14 @@ def _push_to_kaggle(job):
     kdir = BASE / "var" / f"ui_{job_id}"
     kdir.mkdir(parents=True, exist_ok=True)
     try:
-        script = _build_kaggle_script(job_id, job["prompt"], job["style"], job["lighting"], job["camera"])
+        script = _build_kaggle_script(
+            job_id,
+            job["prompt"],
+            job["style"],
+            job["lighting"],
+            job["camera"],
+            duration=job.get("duration", 5),
+        )
     except Exception as e:
         return None, f"build failed: {e}"
     (kdir / "script.py").write_text(script)

@@ -97,8 +97,15 @@ function drawAI() {
   prompt.style.borderRadius = "8px";
   prompt.style.fontFamily = "inherit";
 
-  const style = sel([["natural","طبيعي"],["dramatic","درامي"],["warm","دافئ"],["cold","بارد"],["sci_fi","خيال علمي"],["epic","ملحمي"],["documentary","وثائقي"]], "dramatic");
-  const lighting = sel([["natural","طبيعية"],["dramatic","درامية"],["studio","استوديو"],["night","ليلية"],["day","نهارية"],["volumetric","حجمية"],["backlight","خلفية"]], "dramatic");
+  const style = sel([
+    ["cinematic_realistic","1. Cinematic Realistic (واقعي سينمائي)"],
+    ["realistic_human","2. Realistic Human (بشر واقعيون)"],
+    ["cartoon_3d","3. 3D Cartoon (كرتون ثلاثي الأبعاد)"],
+    ["cartoon_2d","4. 2D Cartoon (رسوم كلاسيكية)"],
+    ["anime","5. Anime (أنمي ياباني)"]
+  ], "cinematic_realistic");
+  const duration = sel([["5","5 ثوانٍ (لقطة واحدة)"],["10","10 ثوانٍ (لقطتان)"],["15","15 ثانية (3 لقطات)"],["20","20 ثانية (4 لقطات)"],["30","30 ثانية (6 لقطات)"]], "5");
+  const lighting = sel([["natural","طبيعية"],["dramatic","درامية"],["studio","استوديو"],["night","ليلية"],["day","نهارية"],["golden_hour","الغروب الذهبي"],["volumetric","حجمية"],["backlight","خلفية"]], "dramatic");
   const camera = sel([["static","ثابتة"],["dolly_in","اقتراب"],["dolly_out","ابتعاد"],["pan","جانبية"],["tracking","تتبع"],["orbit","دائرية"],["handheld","محمولة"]], "dolly_in");
 
   const generateBtn = h("button", { type: "button", class: "btn primary", onclick: async () => {
@@ -108,7 +115,7 @@ function drawAI() {
     generateBtn.textContent = "⏳ جاري الإرسال...";
     try {
       await api("/api/cinema/generate", { method: "POST", body: {
-        prompt: p, style: style.value, lighting: lighting.value, camera: camera.value
+        prompt: p, style: style.value, lighting: lighting.value, camera: camera.value, duration: parseInt(duration.value, 10)
       }});
       prompt.value = "";
       toast("تم إرسال الطلب إلى Kaggle");
@@ -122,8 +129,9 @@ function drawAI() {
   const form = h("div", { class: "field" },
     h("label", {}, "وصف المشهد (الإنجليزية أفضل)"),
     prompt,
-    h("div", { style: "display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px" },
-      h("div", {}, h("label", {}, "الأسلوب"), style),
+    h("div", { style: "display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px" },
+      h("div", {}, h("label", {}, "الأسلوب (5 أنماط)"), style),
+      h("div", {}, h("label", {}, "المدة المستهدفة"), duration),
       h("div", {}, h("label", {}, "الإضاءة"), lighting),
       h("div", {}, h("label", {}, "الكاميرا"), camera)
     ),

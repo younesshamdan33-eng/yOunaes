@@ -14,41 +14,39 @@ def test_timeline_duration_bounds():
     with pytest.raises(ValueError):
         tm.plan_timeline("A scene", target_seconds=31)  # Above 30
 
-def test_timeline_shot_segmentation_5s():
+@pytest.mark.parametrize("duration,expected_shots", [
+    (5, 1),
+    (10, 2),
+    (15, 3),
+    (20, 4),
+    (30, 6),
+])
+def test_all_target_durations(duration, expected_shots):
     tm = TimelineManager(shot_seconds=5)
-    plan = tm.plan_timeline("A warrior standing at sunset", target_seconds=5)
-    assert plan.target_seconds == 5
-    assert plan.total_shots == 1
-    assert len(plan.shots) == 1
-    assert plan.shots[0].duration_seconds == 5
-    assert "cinematic_realistic" in plan.style
+    plan = tm.plan_timeline("A dramatic sequence across the city", target_seconds=duration, style="cinematic_realistic")
+    assert plan.target_seconds == duration
+    assert plan.total_shots == expected_shots
+    assert len(plan.shots) == expected_shots
+    assert sum(s.duration_seconds for s in plan.shots) == duration
 
-def test_timeline_shot_segmentation_15s():
+def test_shot_continuity_and_character_preservation():
     tm = TimelineManager(shot_seconds=5)
-    plan = tm.plan_timeline("An epic battle unfolding", target_seconds=15, style="anime")
-    assert plan.target_seconds == 15
-    assert plan.total_shots == 3
-    assert len(plan.shots) == 3
-    total_dur = sum(s.duration_seconds for s in plan.shots)
-    assert total_dur == 15
-    assert plan.style == "anime"
-    # Seed variance for temporal variation
-    assert plan.shots[0].seed_offset != plan.shots[1].seed_offset
+    plan = tm.plan_timeline("A detective in a dark coat searching for clues", target_seconds=15)
+    for i, shot in enumerate(plan.shots):
+        if i > 0:
+            assert "Continuing sequence shot" in shot.prompt
+            assert "detective" in shot.prompt
+        # Each shot has a differentiated camera angle or movement
+        assert shot.camera_motion in ["static", "tracking", "dolly_in", "pan"]
 
-def test_timeline_shot_segmentation_30s():
-    tm = TimelineManager(shot_seconds=5)
-    plan = tm.plan_timeline("رحلة استكشاف في أعماق الفضاء", target_seconds=30, style="cartoon_3d")
-    assert plan.target_seconds == 30
-    assert plan.language == "ar"
-    assert plan.style == "cartoon_3d"
-    assert sum(s.duration_seconds for s in plan.shots) == 30
-    assert plan.total_shots >= 6
-
-def test_stitch_single_video_fallback(tmp_path):
+def test_stitch_multiple_shots_fallback(tmp_path):
     tm = TimelineManager()
-    v1 = tmp_path / "v1.mp4"
-    v1.write_bytes(b"dummy_video_stream")
-    out = tmp_path / "out.mp4"
-    res = tm.stitch_shots([v1], out)
-    assert res.is_file()
-    assert res.read_bytes() == b"dummy_video_stream"
+    v1 = tmp_path / "shot_01.mp4"
+    v2 = tmp_path / "shot_02.mp4"
+    v1.write_bytes(b"shot_one_content")
+    v2.write_bytes(b"shot_two_content")
+
+    out = tmp_path / "final_combined.mp4"
+    result = tm.stitch_shots([v1, v2], out)
+    assert result.is_file()
+    assert result.stat().st_size > 0

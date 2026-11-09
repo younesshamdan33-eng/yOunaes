@@ -12,13 +12,22 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-from .prompt_engineer import (
-    resolve_style,
-    detect_language,
-    enrich_bilingual_prompt,
-    build_cinematic_prompt,
-    parse_prompt_structure,
-)
+try:
+    from .prompt_engineer import (
+        resolve_style,
+        detect_language,
+        enrich_bilingual_prompt,
+        build_cinematic_prompt,
+        parse_prompt_structure,
+    )
+except (ImportError, ValueError):
+    from prompt_engineer import (
+        resolve_style,
+        detect_language,
+        enrich_bilingual_prompt,
+        build_cinematic_prompt,
+        parse_prompt_structure,
+    )
 
 MIN_TARGET_SECONDS = 5
 MAX_TARGET_SECONDS = 30
