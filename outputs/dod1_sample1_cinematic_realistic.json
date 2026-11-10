@@ -1,0 +1,13 @@
+{
+  "id": "dod1_sample1_cinematic_realistic",
+  "style": "cinematic_realistic",
+  "prompt": "A lone explorer wearing a weathered expedition coat walks across vast desert sand dunes at sunset, medium shot, waist-up framing, static camera, locked-off tripod, normal lens, 50mm, natural soft lighting, balanced exposure, cinematic live-action film, photorealistic environment, deliberate visual storytelling, natural physics, realistic motion, anamorphic 35mm film texture, balanced color grading, shallow depth of field, gentle background separation",
+  "negative_prompt": "2d cartoon, anime, 3d cartoon, illustration, plastic skin, drawing, deformed anatomy, extra limbs, low quality, blurry, flicker, jitter, text, watermark, logo",
+  "seed": 42,
+  "space": "Upsampler/wan-2-2-14b-text-to-video",
+  "duration_seconds": 5.0,
+  "filesize_bytes": 220472,
+  "sha256": "ceb150538df4c837619eb0b0aaf0202a0cd640a1a37f43c6e7a37c6ae2688101",
+  "latency_seconds": 40.34,
+  "status": "success"
+}

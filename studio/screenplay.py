@@ -144,7 +144,8 @@ def plan_from_idea(spec):
     if isinstance(target, bool) or not isinstance(target, int) or not 6 <= target <= film.MAX_TARGET:
         raise ScreenplayError("target_seconds must be an integer between 6 and %d" % film.MAX_TARGET)
 
-    shot = spec.get("shot_seconds") or DEFAULT_SHOT_SECONDS
+    raw_shot = spec.get("shot_seconds")
+    shot = DEFAULT_SHOT_SECONDS if raw_shot is None else raw_shot
     if isinstance(shot, bool) or not isinstance(shot, int) or not 2 <= shot <= 10:
         raise ScreenplayError("shot_seconds must be an integer between 2 and 10")
 
