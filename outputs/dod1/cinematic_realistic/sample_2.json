@@ -1,0 +1,14 @@
+{
+  "style": "cinematic_realistic",
+  "sample_index": 2,
+  "prompt": "A rainy neon-lit city street at night with futuristic flying vehicles passing above tall skyscrapers, medium shot, waist-up framing, static camera, locked-off tripod, normal lens, 50mm, natural soft lighting, balanced exposure, cinematic live-action film, photorealistic environment, deliberate visual storytelling, natural physics, realistic motion, anamorphic 35mm film texture, balanced color grading, shallow depth of field, gentle background separation",
+  "negative_prompt": "2d cartoon, anime, 3d cartoon, illustration, plastic skin, drawing, deformed anatomy, extra limbs, low quality, blurry, flicker, jitter, text, watermark, logo",
+  "seed": 142,
+  "duration_seconds": 5.1,
+  "width": 704,
+  "height": 512,
+  "filesize_bytes": 204197,
+  "sha256": "74de8d1faf9bec5ed94c9c1dfd249533546ca67b3760c6ceecaaafc7f962cd49",
+  "latency_seconds": 8.81,
+  "backend": "Lightricks/ltx-video-distilled (Free GPU)"
+}

@@ -1,0 +1,14 @@
+{
+  "id": "younaeshamdane/cinema-ai-phase1-run01",
+  "title": "Cinema AI Phase 1 Run 01",
+  "code_file": "main.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": []
+}
